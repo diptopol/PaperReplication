@@ -1,6 +1,8 @@
 # Compiled class file
 *.class
 
+dataset/*
+
 # Log file
 *.log
 
@@ -9,6 +11,28 @@
 
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
+
+# Intellij files
+.idea/*
+*.iml
+
+# eclipse specific
+*.pydevproject
+.project
+.metadata
+bin/**
+tmp/**
+tmp/**/*
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.classpath
+.settings/
+.loadpath
+
+target/*
 
 # Package Files #
 *.jar
