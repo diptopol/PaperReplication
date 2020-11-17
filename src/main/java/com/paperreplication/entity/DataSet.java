@@ -1,5 +1,6 @@
 package com.paperreplication.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import org.apache.commons.csv.CSVRecord;
 
 import java.time.LocalDateTime;
@@ -14,6 +15,9 @@ import java.util.Date;
  */
 public class DataSet {
 
+    public static final String[] HEADER = {"testSuite", "changeRequestId", "stage", "status", "launchTime",
+            "executionTimeInMilliSeconds", "size", "shardNumber", "runNumber", "language"};
+
     private String testSuite;
 
     private int changeRequestId;
@@ -24,7 +28,7 @@ public class DataSet {
     //PASSED, FAILED
     private String status;
 
-    private LocalDateTime launchTime;
+    private String launchTime;
 
     private double executionTimeInMilliSeconds;
 
@@ -43,13 +47,8 @@ public class DataSet {
         this.stage = record.get(2);
         this.status = record.get(3);
 
-        DateTimeFormatter formatter = new DateTimeFormatterBuilder()
-                .appendPattern("yyyy-MM-dd HH:mm:ss")
-                .appendFraction(ChronoField.MICRO_OF_SECOND, 0, 6, true)
-                .toFormatter();
-
         //2014-01-01 00:00:13.672
-        this.launchTime = LocalDateTime.parse(record.get(4), formatter);
+        this.launchTime = record.get(4);
         this.executionTimeInMilliSeconds = Double.valueOf(record.get(5));
         this.size = record.get(6);
         this.shardNumber = Integer.valueOf(record.get(7));
@@ -73,8 +72,17 @@ public class DataSet {
         return status;
     }
 
-    public LocalDateTime getLaunchTime() {
+    public String getLaunchTime() {
         return launchTime;
+    }
+
+    public LocalDateTime getLaunchTimeDate() {
+        DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+                .appendPattern("yyyy-MM-dd HH:mm:ss")
+                .appendFraction(ChronoField.MICRO_OF_SECOND, 0, 6, true)
+                .toFormatter();
+
+        return LocalDateTime.parse(this.launchTime, formatter);
     }
 
     public double getExecutionTimeInMilliSeconds() {
