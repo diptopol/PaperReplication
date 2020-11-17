@@ -47,19 +47,20 @@ public class Utils {
         long t1Count = 0;
 
         List<Integer> failedListForTestSuite2 = failedDataSetTestSuiteMap.get(testSuite2);
-        List<Integer> failedListForTest1 = failedDataSetTestSuiteMap.get(testSuite1);
+        List<Integer> failedListForTestSuite1 = failedDataSetTestSuiteMap.get(testSuite1);
+        List<Integer> passedListForTestSuite1 = passedChangeRequestIdTestSuiteMap.get(testSuite1);
 
         if (t1Status.equals("FAILED")) {
             t1Andt2Count = Optional.ofNullable(failedListForTestSuite2).orElse(Collections.emptyList())
                     .stream()
-                    .filter(t2 -> Objects.nonNull(failedListForTest1) && failedListForTest1.contains(t2)).count();
-            t1Count = Objects.nonNull(failedListForTest1) ? failedListForTest1.size() : 0;
+                    .filter(t2 -> Objects.nonNull(failedListForTestSuite1) && failedListForTestSuite1.contains(t2)).count();
+            t1Count = Objects.nonNull(failedListForTestSuite1) ? failedListForTestSuite1.size() : 0;
 
         } else {
             t1Andt2Count = Optional.ofNullable(failedListForTestSuite2).orElse(Collections.emptyList())
-                    .stream().filter(t2 -> !(Objects.nonNull(failedListForTest1) && failedListForTest1.contains(t2))).count();
-            t1Count = Objects.nonNull(passedChangeRequestIdTestSuiteMap.get(testSuite1))
-                    ? passedChangeRequestIdTestSuiteMap.get(testSuite1).size()
+                    .stream().filter(t2 -> (Objects.nonNull(passedListForTestSuite1) && passedListForTestSuite1.contains(t2))).count();
+            t1Count = Objects.nonNull(passedListForTestSuite1)
+                    ? passedListForTestSuite1.size()
                     : 0;
         }
 
