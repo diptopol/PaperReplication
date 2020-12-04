@@ -39,6 +39,8 @@ public class App {
         Date startInit = new Date();
         List<DataSet> testDataSet = Utils.getDataSetList("testDataSet.csv", true);
 
+        writeFifoBaselineOutput(testDataSet);
+
         getDistinctTestSuiteList();
         getT1PassedProbabilityMatrix();
         getT1FailedProbabilityMatrix();
@@ -53,6 +55,11 @@ public class App {
         Map<Integer, List<DataSet>> finishedTestSetGroupByChangeRequestId = performCodynaqSingleParallel(testDataSet);
         Utils.writeTestRequestInfo(finishedTestSetGroupByChangeRequestId, "CodynaqSingleTestRequestInfo.dat");
 
+    }
+
+    private static void writeFifoBaselineOutput(List<DataSet> testDataSet){
+        testDataSet.sort(Comparator.comparing(DataSet::getLaunchTimeDate));
+        serializeOutput(testDataSet, "FifoBaselineTestRequestInfo.dat");
     }
 
     private static void serializeOutput(List<DataSet> dataSetList, String fileName) {
