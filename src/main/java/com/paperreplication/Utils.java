@@ -39,6 +39,19 @@ public class Utils {
         return count;
     }
 
+    public static double getMedian(List<Double> list) {
+        list.sort(null);
+
+        double median;
+        if (list.size() % 2 == 0) {
+            median = (list.get(list.size() / 2) + (double) list.get(list.size() / 2 - 1)) / 2;
+        } else {
+            median = (double) list.get(list.size() / 2);
+        }
+
+        return median;
+    }
+
     public static double getProbability(String testSuite1, String testSuite2,
                                         Map<String, List<Integer>> failedDataSetTestSuiteMap,
                                         Map<String, List<Integer>> passedChangeRequestIdTestSuiteMap, String t1Status) {
@@ -221,6 +234,30 @@ public class Utils {
             ex.printStackTrace();
         }
 
+    }
+
+    public static void writeTestRequestInfo(Map<Integer, List<DataSet>> testRequestMap, String fileName) {
+        try (ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream("dataset/" + fileName))) {
+
+            objectOutputStream.writeObject(testRequestMap);
+
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public static Map<Integer, List<DataSet>> readTestRequestInfo(String fileName) {
+        Map<Integer, List<DataSet>> testRequestInfo = null;
+
+        try (ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream("dataset/" + fileName))) {
+
+            testRequestInfo = (Map<Integer, List<DataSet>>) objectInputStream.readObject();
+
+        } catch (IOException | ClassNotFoundException ex) {
+            ex.printStackTrace();
+        }
+
+        return testRequestInfo;
     }
 
     public static void writeMatrix(double[][] matrix, String fileName) {

@@ -3,6 +3,7 @@ package com.paperreplication.entity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import org.apache.commons.csv.CSVRecord;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
@@ -13,7 +14,9 @@ import java.util.Date;
  * @author Urbashi
  * @since 11/13/2020 7:21 PM
  */
-public class DataSet {
+public class DataSet implements Serializable {
+
+    public static final long serialVersionUID = 1L;
 
     public static final String[] HEADER = {"testSuite", "changeRequestId", "stage", "status", "launchTime",
             "executionTimeInMilliSeconds", "size", "shardNumber", "runNumber", "language"};
@@ -41,6 +44,8 @@ public class DataSet {
 
     private String language;
 
+    private double priority;
+
     public DataSet(CSVRecord record) {
         this.testSuite = record.get(0);
         this.changeRequestId = Integer.valueOf(record.get(1));
@@ -54,6 +59,7 @@ public class DataSet {
         this.shardNumber = Integer.valueOf(record.get(7));
         this.runNumber = Integer.valueOf(record.get(8));
         this.language = record.get(9);
+        this.priority = 0;
     }
 
     public String getTestSuite() {
@@ -103,6 +109,14 @@ public class DataSet {
 
     public String getLanguage() {
         return language;
+    }
+
+    public double getPriority() {
+        return priority;
+    }
+
+    public void setPriority(double priority) {
+        this.priority = priority;
     }
 
     @Override
