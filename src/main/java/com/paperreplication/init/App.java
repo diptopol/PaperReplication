@@ -1,6 +1,7 @@
 package com.paperreplication.init;
 
-import com.paperreplication.Utils;
+import com.paperreplication.utils.PerformanceEvaluationUtils;
+import com.paperreplication.utils.Utils;
 import com.paperreplication.entity.DataSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,6 +10,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -27,26 +30,87 @@ public class App {
 
     public static void main(String[] args) {
         logger.info("Start Time: {}", new Date());
-        //initialDataLoading();
 
+        //initialDataLoading();
         //createProbabilityMatrix("t1FailedMatrix.dat", "FAILED");
         //createProbabilityMatrix("t1PassedMatrix.dat", "PASSED");
 
-        //readAndPrintMatrix("t1FailedMatrix.dat");
-        //readAndPrintMatrix("t1PassedMatrix.dat");
+        //writeFifoBaselineOutput();
+        //writeCodyNaqSingleOutput();
 
+        evaluatePerformance();
+    }
 
-        Date startInit = new Date();
+    private static void evaluatePerformance() {
+        Date start = new Date();
+        Map<Integer, List<DataSet>> fifoResult =
+                Utils.readTestRequestInfo("FifoBaselineTestRequestInfo.dat");
+
+        Map<Integer, List<DataSet>> codynaqSingleResult =
+                Utils.readTestRequestInfo("CodynaqSingleTestRequestInfo.dat");
+        Date end = new Date();
+        logger.info("Data Read Duration : {}", (end.getTime() - start.getTime()));
+
+        double medianGainFirstFail = PerformanceEvaluationUtils.getMedianGainFirstFailure(fifoResult, codynaqSingleResult);
+        logger.info("Median Gain First Fail: {}", medianGainFirstFail);
+
+        double medianGainFirstFailAtLeastOneFailure = PerformanceEvaluationUtils.getMedianGainFirstFailAtLeastOneFailure(fifoResult, codynaqSingleResult);
+        logger.info("Median Gain First Fail At Least One Failure: {}", medianGainFirstFailAtLeastOneFailure);
+
+        double medianGainAllFail = PerformanceEvaluationUtils.getMedianGainAllFail(fifoResult, codynaqSingleResult);
+        logger.info("Median Gain All Fail: {}", medianGainAllFail);
+
+        double medianGainAllFailAtLeastOneFailure = PerformanceEvaluationUtils.getMedianGainAllFailWithAtLeastOneFailure(fifoResult, codynaqSingleResult);
+        logger.info("Median Gain All Fail  At Least One Failure: {}", medianGainAllFailAtLeastOneFailure);
+
+        double medianPercentageDelay = PerformanceEvaluationUtils.getPercentageDelay(fifoResult, codynaqSingleResult);
+        logger.info("Percentage Delay: {}", medianPercentageDelay);
+
+        double medianPercentageDelayAtLeastOneFailure = PerformanceEvaluationUtils.getPercentageDelayWithAtLeastOneFailure(fifoResult, codynaqSingleResult);
+        logger.info("Percentage Delay  At Least One Failure: {}", medianPercentageDelayAtLeastOneFailure);
+    }
+
+    private static <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
+        Set<Object> seen = ConcurrentHashMap.newKeySet();
+        return t -> seen.add(keyExtractor.apply(t));
+    }
+
+    private static List<Integer> getAllPassedChangeRequestIdList() {
+        String preDataSetFileName = "GooglePostCleanData.out";
+        List<DataSet> preDataSetList = Utils.getDataSetList(preDataSetFileName, false);
+
+        System.out.println(preDataSetList.stream().filter(distinctByKey(DataSet::getChangeRequestId)).count());
+
+        Map<Integer, List<DataSet>> map = preDataSetList.stream().collect(Collectors.groupingBy(DataSet::getChangeRequestId));
+
+        List<Integer> allPassedChangeRequestIdList = new ArrayList<>();
+        for (Map.Entry<Integer, List<DataSet>> entry: map.entrySet()) {
+            List<DataSet> dataSetList = entry.getValue();
+
+            if (dataSetList.stream().allMatch(dataSet -> dataSet.getStatus().equals("PASSED"))) {
+                allPassedChangeRequestIdList.add(entry.getKey());
+            }
+        }
+
+        return allPassedChangeRequestIdList;
+    }
+
+    private static void writeFifoBaselineOutput(){
         List<DataSet> testDataSet = Utils.getDataSetList("testDataSet.csv", true);
 
-        writeFifoBaselineOutput(testDataSet);
+        testDataSet.sort(Comparator.comparing(DataSet::getLaunchTimeDate));
+        serializeOutput(testDataSet, "FifoBaselineTestRequestInfo.dat");
+    }
+
+    private static void writeCodyNaqSingleOutput() {
+        Date startInit = new Date();
+        List<DataSet> testDataSet = Utils.getDataSetList("testDataSet.csv", true);
 
         getDistinctTestSuiteList();
         getT1PassedProbabilityMatrix();
         getT1FailedProbabilityMatrix();
 
         Date endInit = new Date();
-
         logger.info("Initialization Duration : {}", (endInit.getTime() - startInit.getTime()));
 
         //sort the data
@@ -54,12 +118,6 @@ public class App {
 
         Map<Integer, List<DataSet>> finishedTestSetGroupByChangeRequestId = performCodynaqSingleParallel(testDataSet);
         Utils.writeTestRequestInfo(finishedTestSetGroupByChangeRequestId, "CodynaqSingleTestRequestInfo.dat");
-
-    }
-
-    private static void writeFifoBaselineOutput(List<DataSet> testDataSet){
-        testDataSet.sort(Comparator.comparing(DataSet::getLaunchTimeDate));
-        serializeOutput(testDataSet, "FifoBaselineTestRequestInfo.dat");
     }
 
     private static void serializeOutput(List<DataSet> dataSetList, String fileName) {
@@ -205,20 +263,6 @@ public class App {
 
         Utils.writeMatrix(probabilityMatrixBasedOnT1, fileName);
         logger.info("Write completed");
-    }
-
-    private static void readAndPrintMatrix(String fileName) {
-        List<String> distinctTestSuiteList = Utils.getDistinctTestSuiteList("distinctTestSuiteList.csv");
-        int size = distinctTestSuiteList.size();
-        double[][] probabilityMatrixBasedOnT1Fail = Utils.readMatrix(fileName);
-
-        /*for (int i = 0; i < size; i++) {
-            for (int j = 0; j < size; j++) {
-                if (probabilityMatrixBasedOnT1Fail[i][j] > 0) {
-                    System.out.println(probabilityMatrixBasedOnT1Fail[i][j] + " [i] : " + i + " [j] : " + j);
-                }
-            }
-        }*/
     }
 
     private static List<String> getDistinctTestSuiteListAfterSerialization(List<DataSet> dataSetList, String fileName) {
