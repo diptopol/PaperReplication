@@ -1,8 +1,8 @@
 package com.paperreplication.init;
 
+import com.paperreplication.entity.DataSet;
 import com.paperreplication.utils.PerformanceEvaluationUtils;
 import com.paperreplication.utils.Utils;
-import com.paperreplication.entity.DataSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,8 +10,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -109,6 +107,12 @@ public class App {
         logger.info("Percentage Delay  At Least One Failure: {}", medianPercentageDelayAtLeastOneFailure);
     }
 
+    /**
+     * This method ordered the test suites based on launch time to simulate FIFOBASELINE. The sorted list then grouped
+     * into multiple groups based on changeRequestID and saved using java serialization.
+     *
+     * Also See {@link com.paperreplication.init.App#performCodynaqSingleParallel(List)}
+     */
     private static void writeFifoBaselineOutput(){
         List<DataSet> testDataSet = Utils.getDataSetList("testDataSet.csv", true);
 
@@ -116,6 +120,10 @@ public class App {
         serializeOutput(testDataSet, "FifoBaselineTestRequestInfo.dat");
     }
 
+    /**
+     * This method performs codynaqSingle algorithm and then saved the group of list grouped by change request ID. This
+     * method first load the co-failure distribution matrix and then perform the algorithm and saved the result.
+     */
     private static void writeCodyNaqSingleOutput() {
         Date startInit = new Date();
         List<DataSet> testDataSet = Utils.getDataSetList("testDataSet.csv", true);
@@ -134,6 +142,12 @@ public class App {
         Utils.writeTestRequestInfo(finishedTestSetGroupByChangeRequestId, "CodynaqSingleTestRequestInfo.dat");
     }
 
+    /**
+     * This method create a map from list using grouped by param and saved the map in file using Java Serialization
+     *
+     * @param dataSetList the list on which the group by operation will be performed
+     * @param fileName name of the file on which the data will be stored
+     */
     private static void serializeOutput(List<DataSet> dataSetList, String fileName) {
         Map<Integer, List<DataSet>> dataSetGroupedByChangeRequest =
                 dataSetList.stream()
@@ -142,6 +156,12 @@ public class App {
         Utils.writeTestRequestInfo(dataSetGroupedByChangeRequest, fileName);
     }
 
+    /**
+     * This method will perform codynaqSingle using parallel strem in order to improve execution performance
+     *
+     * @param testDataSet the dataset for performing codynaqSingle algorithm
+     * @return {@code Map} which will contain change request ID as key and list of corresponding dataset as value
+     */
     private static Map<Integer, List<DataSet>> performCodynaqSingleParallel(List<DataSet> testDataSet) {
         Map<Integer, List<DataSet>> testDataSetGroupByChangeRequestId = testDataSet.stream()
                 .collect(Collectors.groupingBy(DataSet::getChangeRequestId));
@@ -172,6 +192,13 @@ public class App {
         return finishedTestSetGroupByChangeRequestId;
     }
 
+    /**
+     * This method calculates reprioritization of dataset based on priority score
+     *
+     * @param dispatchQueue
+     * @param finishedTestSuiteList
+     * @return prioritizedList
+     */
     private static List<DataSet> getRePrioritizedList(List<DataSet> dispatchQueue, List<DataSet> finishedTestSuiteList) {
         List<DataSet> prioritizedList = new ArrayList<>(dispatchQueue);
 
