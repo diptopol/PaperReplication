@@ -1,6 +1,8 @@
 package com.paperreplication.utils;
 
 import com.paperreplication.entity.DataSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +14,7 @@ import java.util.stream.IntStream;
  * @since 12/4/2020 6:58 PM
  */
 public class PerformanceEvaluationUtils {
+    private static Logger logger = LoggerFactory.getLogger(PerformanceEvaluationUtils.class);
 
     public static double getPercentageDelay(Map<Integer, List<DataSet>> fifoResult,
                                              Map<Integer, List<DataSet>> codynaqSingleResult) {
@@ -43,7 +46,8 @@ public class PerformanceEvaluationUtils {
             delayList.add(totalFailedCount != 0 ? ((double) countOfDelay) / totalFailedCount : 0);
         }
 
-        System.out.println(delayList.stream().filter(d -> d > 0).count());
+        logger.info("Number of change request with at-least one Delay: {}",
+                delayList.stream().filter(d -> d > 0).count());
 
         return Utils.getMedian(delayList);
     }
@@ -82,8 +86,6 @@ public class PerformanceEvaluationUtils {
                 delayList.add(totalFailedCount != 0 ? ((double) countOfDelay) / totalFailedCount : 0);
             }
         }
-
-        System.out.println(delayList.stream().filter(d -> d > 0).count());
 
         return Utils.getMedian(delayList);
     }

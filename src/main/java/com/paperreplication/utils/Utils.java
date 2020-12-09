@@ -1,6 +1,5 @@
 package com.paperreplication.utils;
 
-import com.paperreplication.entity.ChangeRequestStatus;
 import com.paperreplication.entity.DataSet;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -134,32 +133,6 @@ public class Utils {
             dataSetList.forEach(dataSetConsumer);
             printer.flush();
 
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
-    }
-
-    public static void writeChangeRequestStatus(List<ChangeRequestStatus> changeRequestStatusList, String fileName) {
-        changeRequestStatusList.sort(Comparator.comparing(ChangeRequestStatus::getChangeRequestId));
-
-        try {
-            FileWriter out = new FileWriter("dataset/" + fileName);
-
-            try (CSVPrinter printer = new CSVPrinter(out, CSVFormat.DEFAULT
-                    .withHeader(ChangeRequestStatus.HEADERS))) {
-                Consumer<ChangeRequestStatus> changeRequestStatusConsumer = changeRequestStatus -> {
-                    try {
-                        printer.printRecord(changeRequestStatus.getChangeRequestId(), changeRequestStatus.getPassCount(),
-                                changeRequestStatus.getFailCount());
-
-                    } catch (IOException ex) {
-                        ex.printStackTrace();
-                    }
-                };
-                changeRequestStatusList.forEach(changeRequestStatusConsumer);
-
-                printer.flush();
-            }
         } catch (IOException ex) {
             ex.printStackTrace();
         }
